@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Add Product{% endblock %}
+
+{% block content %}
+<h2>Add Product to "{{ subcategory.name }}"</h2>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  {{ form.as_p }}
+
+  <button type="submit" class="btn btn-success">Save Product</button>
+  <a href="{% url 'products_by_subcategory' subcategory.id %}" class="btn btn-secondary">Cancel</a>
+</form>
+{% endblock %}

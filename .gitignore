@@ -1,0 +1,60 @@
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django stuff
+*.sqlite3
+db.sqlite3
+*.log
+*.pot
+*.pyc
+
+# Env files
+.env
+
+# VSCode
+.vscode/
+
+# PyCharm
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Django media and static
+media/
+staticfiles/
+static/
+
+# Cloudinary storage (if local caching)
+cloudinary_storage/
+
+# Build directories (if you have frontend build like React/Vue)
+build/
+dist/
+
+# Node modules (if using npm/yarn)
+node_modules/
+
+# Coverage reports
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+*.py,cover
+nosetests.xml
+pytest_cache/
+.tox/
+
+# Byte-compiled / optimized / DLL files
+*.so
+*.egg
+*.egg-info/
+.eggs/
+
+# Backup files
+*.bak
+*.swp
+*.swo

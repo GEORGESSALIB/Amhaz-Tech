@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}MyStore{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --sidebar-width: 250px;
+      --sidebar-bg: #1f2937;
+      --sidebar-color: #e5e7eb;
+      --sidebar-hover: #374151;
+      --primary-color: #0d6efd;
+    }
+
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f8f9fa;
+      overflow-x: hidden;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--sidebar-width);
+      height: 100%;
+      background-color: var(--sidebar-bg);
+      color: var(--sidebar-color);
+      overflow-y: auto;
+      transform: translateX(0);
+      transition: transform 0.3s ease;
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar.hidden {
+      transform: translateX(-100%);
+    }
+
+    /* Logo */
+    .sidebar .logo {
+      text-align: center;
+      padding: 1rem;
+      border-bottom: 1px solid #374151;
+    }
+
+    .sidebar .logo h4 {
+      margin: 0;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    /* Links */
+    .sidebar a {
+      color: var(--sidebar-color);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 1rem;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .sidebar a:hover {
+      background-color: var(--sidebar-hover);
+    }
+
+    .sidebar a.active {
+      background-color: var(--primary-color);
+      color: #fff;
+    }
+
+    /* Accordion */
+    .accordion-button {
+      background: none;
+      color: var(--sidebar-color);
+      padding: 0.5rem 1rem;
+    }
+
+    .accordion-button:not(.collapsed) {
+      background-color: var(--sidebar-hover);
+    }
+
+    .accordion-body {
+      padding-left: 1rem;
+    }
+
+    /* Main content */
+    .content {
+      margin-left: var(--sidebar-width);
+      transition: margin-left 0.3s ease;
+    }
+
+    .content.full {
+      margin-left: 0;
+    }
+
+    /* Topbar */
+    .topbar {
+      height: 60px;
+      background: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    /* Toggle button */
+    #sidebarToggle {
+      cursor: pointer;
+      font-size: 1.25rem;
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      .sidebar.show {
+        transform: translateX(0);
+      }
+      .content {
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+
+  <!-- Logo -->
+  <div class="logo mb-4">
+    <h4>MyStore</h4>
+  </div>
+
+  <!-- Categories Accordion -->
+  <div class="accordion" id="categoryAccordion">
+    {% for category in nav_categories %}
+    <div class="accordion-item bg-transparent border-0">
+      <h2 class="accordion-header">
+        <button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#cat{{ category.id }}">
+          <i class="bi bi-folder"></i>
+          <span>{{ category.name }}</span>
+        </button>
+      </h2>
+      <div id="cat{{ category.id }}" class="accordion-collapse collapse" data-bs-parent="#categoryAccordion">
+        <div class="accordion-body py-1">
+          <ul class="list-unstyled ps-3">
+            {% for sub in category.subcategory_set.all %}
+            <li>
+              <a href="{% url 'products_by_subcategory' sub.id %}">
+                <i class="bi bi-tag"></i>
+                <span>{{ sub.name }}</span>
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<!-- Main Content -->
+<div class="content" id="mainContent">
+
+  <!-- Topbar -->
+  <div class="topbar d-flex justify-content-between align-items-center">
+    <span id="sidebarToggle"><i class="bi bi-list"></i></span>
+
+    <div class="d-flex align-items-center gap-2">
+      {% if user.is_authenticated %}
+        <span>Hello, <strong>{{ user.username }}</strong></span>
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button class="btn btn-outline-danger btn-sm">Logout</button>
+        </form>
+      {% else %}
+        <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm">Login</a>
+        <a href="{% url 'signup' %}" class="btn btn-primary btn-sm">Sign up</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Page Content -->
+  <main class="p-4">
+    {% block content %}{% endblock %}
+  </main>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Sidebar Toggle JS -->
+<script>
+  const sidebar = document.getElementById('sidebar');
+  const content = document.getElementById('mainContent');
+  const toggleBtn = document.getElementById('sidebarToggle');
+
+  toggleBtn.addEventListener('click', () => {
+    sidebar.classList.toggle('hidden'); // fully hide/show
+    content.classList.toggle('full');   // expand content
+  });
+</script>
+
+</body>
+</html>

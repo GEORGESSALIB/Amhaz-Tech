@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Dashboard</h2>
+
+<!-- ================= FILTERS ================= -->
+<form method="get" class="row g-3 mb-4">
+  <div class="col-md-3">
+    <label class="form-label">Category</label>
+    <select name="category" class="form-select">
+      <option value="">All Categories</option>
+      {% for category in categories %}
+        <option value="{{ category.id }}"
+          {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+          {{ category.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Subcategory</label>
+    <select name="subcategory" class="form-select">
+      <option value="">All Subcategories</option>
+      {% for sub in subcategories %}
+        <option value="{{ sub.id }}"
+          {% if selected_subcategory == sub.id|stringformat:"s" %}selected{% endif %}>
+          {{ sub.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Product</label>
+    <select name="product" class="form-select">
+      <option value="">All Products</option>
+      {% for product in products %}
+        <option value="{{ product.id }}"
+          {% if selected_product == product.id|stringformat:"s" %}selected{% endif %}>
+          {{ product.name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">From</label>
+    <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">To</label>
+    <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+  </div>
+
+  <div class="col-md-3 align-self-end">
+    <button class="btn btn-primary w-100">Apply Filters</button>
+  </div>
+</form>
+
+<!-- ================= STATS ================= -->
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="card bg-primary text-white">
+      <div class="card-body">
+        <h5>Categories</h5>
+        <p class="fs-4">{{ categories|length }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card bg-success text-white">
+      <div class="card-body">
+        <h5>Subcategories</h5>
+        <p class="fs-4">{{ total_subcategories }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card bg-warning text-white">
+      <div class="card-body">
+        <h5>Products</h5>
+        <p class="fs-4">{{ products|length }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card bg-danger text-white">
+      <div class="card-body">
+        <h5>Total Stock</h5>
+        <p class="fs-4">{{ total_stock }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= LOW STOCK ================= -->
+{% if low_stock_products %}
+<h4 class="text-danger mb-3">
+  Low Stock Products
+  <span class="badge bg-danger">{{ low_stock_products|length }}</span>
+</h4>
+
+<div class="row mb-4">
+  {% for product in low_stock_products %}
+  <div class="col-md-3">
+    <div class="card border-danger">
+      <div class="card-body">
+        <h5>{{ product.name }}</h5>
+        <p>
+          Stock:
+          <strong class="text-danger">{{ product.cached_quantity }}</strong>
+        </p>
+        <a href="{% url 'add_stock' product.id %}" class="btn btn-success btn-sm">Add</a>
+        <a href="{% url 'remove_stock' product.id %}" class="btn btn-danger btn-sm">Remove</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ================= PRODUCTS TABLE ================= -->
+<h4 class="mt-4 mb-3">Products</h4>
+
+<table class="table table-hover align-middle">
+  <thead class="table-light">
+    <tr>
+      <th>Product</th>
+      <th>Stock</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for product in products %}
+    <tr>
+      <td>{{ product.name }}</td>
+      <td>
+        {% if product.cached_quantity <= 5 %}
+          <span class="badge bg-danger">{{ product.cached_quantity }}</span>
+        {% else %}
+          <span class="badge bg-success">{{ product.cached_quantity }}</span>
+        {% endif %}
+      </td>
+      <td>
+        <a href="{% url 'add_stock' product.id %}" class="btn btn-sm btn-success">+</a>
+        <a href="{% url 'remove_stock' product.id %}" class="btn btn-sm btn-danger">−</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="3" class="text-center text-muted">No products found</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- ================= RECENT MOVEMENTS ================= -->
+<h4 class="mt-4 mb-3">Recent Stock Movements</h4>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Product</th>
+      <th>Change</th>
+      <th>Reason</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in recent_movements %}
+    <tr>
+      <td>{{ m.product.name }}</td>
+      <td>
+        {% if m.change > 0 %}
+          <span class="text-success">+{{ m.change }}</span>
+        {% else %}
+          <span class="text-danger">{{ m.change }}</span>
+        {% endif %}
+      </td>
+      <td>{{ m.reason }}</td>
+      <td>{{ m.created_at|date:"Y-m-d H:i" }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="4" class="text-center text-muted">No movements</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- ================= STOCK EVOLUTION CHART ================= -->
+<div class="card mt-5">
+  <div class="card-body">
+    <h4 class="mb-3">Stock Level Over Time</h4>
+    <canvas id="movementChart"></canvas>
+  </div>
+</div>
+
+<!-- ================= CHART JS ================= -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const movementData = {{ movements_by_date|safe }};
+
+  new Chart(document.getElementById('movementChart'), {
+    type: 'line',
+    data: {
+      labels: movementData.map(x => x.date),
+      datasets: [{
+        label: 'Total Stock',
+        data: movementData.map(x => x.total_stock),
+        tension: 0.3,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+</script>
+
+{% endblock %}
