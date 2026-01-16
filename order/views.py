@@ -1,20 +1,20 @@
+from django.contrib import messages
+from django.db import transaction
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
 from products.models import Product, Category, SubCategory
-from .models import Cart, CartItem
+from .forms import CheckoutForm
+from .models import Cart, CartItem, Order
+from products.models import StockMovement
+from .utils import build_whatsapp_link, get_or_create_cart
 
 
-
-@login_required
 def cart_add_detail(request, product_id):
     product = get_object_or_404(Product, id=product_id)
 
-    cart, _ = Cart.objects.get_or_create(
-        user=request.user,
-        is_active=True
-    )
+    # ✅ unified cart getter (works for user + guest)
+    cart = get_or_create_cart(request)
 
     # next is ONLY for cancel
     next_url = (
@@ -36,21 +36,16 @@ def cart_add_detail(request, product_id):
             item.quantity += quantity
             item.save()
 
-        # ✅ ALWAYS go to cart after add
         return redirect("cart_view")
 
     return render(request, "order/cart_add_detail.html", {
         "product": product,
         "cart": cart,
-        "next": next_url,   # used ONLY by Cancel
+        "next": next_url,
     })
 
-@login_required
 def cart_view(request):
-    cart, _ = Cart.objects.get_or_create(
-        user=request.user,
-        is_active=True
-    )
+    cart = get_or_create_cart(request)
 
     # filters
     category_id = request.GET.get("category")
@@ -89,7 +84,6 @@ def cart_view(request):
     }
     return render(request, "order/cart_view.html", context)
 
-@login_required
 def cart_add(request, product_id):
     cart, _ = Cart.objects.get_or_create(
         user=request.user if request.user.is_authenticated else None,
@@ -109,7 +103,6 @@ def cart_add(request, product_id):
 
     return redirect("cart_view")
 
-@login_required
 def cart_remove(request, item_id):
     item = get_object_or_404(CartItem, id=item_id)
     item.delete()
@@ -124,5 +117,106 @@ def subcategories_api(request):
         subcategories = [{"id": s.id, "name": s.name} for s in subcategories_qs]
 
     return JsonResponse({"subcategories": subcategories})
+
+
+def checkout(request):
+    cart = get_or_create_cart(request)
+    items = cart.items.select_related("product")
+
+    if not items.exists():
+        messages.error(request, "Your cart is empty.")
+        return redirect("cart_view")
+
+    if request.method == "POST":
+        form = CheckoutForm(request.POST)
+        if form.is_valid():
+            order = form.save(commit=False)
+            order.user = request.user if request.user.is_authenticated else None
+            order.status = "confirmed"
+            order.save()
+            return finalize_order(request, order, cart)
+
+    else:
+        form = CheckoutForm()
+
+        if request.user.is_authenticated:
+            profile = getattr(request.user, "profile", None)
+
+            form.fields["customer_name"].widget.attrs["value"] = (
+                    request.user.get_full_name() or request.user.username
+            )
+            form.fields["customer_email"].widget.attrs["value"] = request.user.email
+            form.fields["customer_phone"].widget.attrs["value"] = profile.phone if profile else ""
+
+            # ✅ Correct way for select/textarea
+            form.initial["district"] = profile.district if profile else ""
+            form.initial["customer_address"] = profile.customer_address if profile else ""
+            form.fields["order_type"].widget.attrs["value"] = "delivery"
+
+    return render(request, "order/checkout.html", {
+        "form": form,
+        "cart": cart,
+        "items": items,
+    })
+
+
+def finalize_order(request, order, cart):
+    items = cart.items.select_related("product")
+
+    customer_name = order.customer_name
+
+    message_lines = [
+        f"🧾 New Order #{order.id}",
+        f"Type: {order.get_order_type_display()}",
+        "",
+        "Items:",
+    ]
+
+    for item in items:
+        product = item.product
+
+        if product.cached_quantity < item.quantity:
+            messages.error(request, f"Not enough stock for {product.name}")
+            return redirect("cart_view")
+
+        product.cached_quantity -= item.quantity
+        product.save()
+
+        StockMovement.objects.create(
+            product=product,
+            change=-item.quantity,
+            reason=f"Order #{order.id} from {customer_name}",
+        )
+
+        message_lines.append(f"- {product.name} x{item.quantity}")
+
+    message_lines.append("")
+    message_lines.append(f"👤 Customer: {customer_name}")
+    message_lines.append(f"📞 Phone: {order.customer_phone}")
+    message_lines.append(f"📍 Address: {order.customer_address}")
+
+    whatsapp_message = "\n".join(message_lines)
+
+    # Reset cart
+    cart.items.all().delete()
+    cart.is_active = False
+    cart.save()
+
+    # New cart
+    if request.user.is_authenticated:
+        Cart.objects.create(user=request.user)
+    else:
+        new_cart = Cart.objects.create()
+        request.session["cart_id"] = new_cart.id
+
+    messages.success(request, "Order placed successfully!")
+
+    wa_link = build_whatsapp_link(
+        phone="96103291033",
+        message=whatsapp_message
+    )
+
+    return redirect(wa_link)
+
 
 

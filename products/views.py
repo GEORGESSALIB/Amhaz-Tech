@@ -169,3 +169,4 @@ def remove_stock(request, product_id):
     else:
         form = StockForm()
     return render(request, 'dashboard/stock_form.html', {'form': form, 'product': product, 'action': 'Remove'})
+

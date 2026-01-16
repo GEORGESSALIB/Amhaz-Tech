@@ -8,4 +8,5 @@ urlpatterns = [
     path('subcategory/<int:subcategory_id>/product/add/', product_add, name='product_add'),
     path('product/<int:product_id>/add_stock/', add_stock, name='add_stock'),
     path('product/<int:product_id>/remove_stock/', remove_stock, name='remove_stock'),
+
 ]
