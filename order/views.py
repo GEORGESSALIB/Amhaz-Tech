@@ -1,48 +1,20 @@
 from django.contrib import messages
+from django.contrib.auth.decorators import user_passes_test, login_required
+from django.core.mail import send_mail
 from django.db import transaction
 from django.db.models import Q
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from django.utils import timezone
+from django.views.decorators.http import require_POST
 from products.models import Product, Category, SubCategory
 from .forms import CheckoutForm
-from .models import Cart, CartItem, Order
+from .models import Cart, CartItem, Order, OrderItem
 from products.models import StockMovement
 from .utils import build_whatsapp_link, get_or_create_cart
+from amhaz import settings
 
-
-def cart_add_detail(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
-
-    # ✅ unified cart getter (works for user + guest)
-    cart = get_or_create_cart(request)
-
-    # next is ONLY for cancel
-    next_url = (
-        request.GET.get("next")
-        or request.META.get("HTTP_REFERER")
-        or "/"
-    )
-
-    if request.method == "POST":
-        quantity = int(request.POST.get("quantity", 1))
-
-        item, created = CartItem.objects.get_or_create(
-            cart=cart,
-            product=product,
-            defaults={"quantity": quantity}
-        )
-
-        if not created:
-            item.quantity += quantity
-            item.save()
-
-        return redirect("cart_view")
-
-    return render(request, "order/cart_add_detail.html", {
-        "product": product,
-        "cart": cart,
-        "next": next_url,
-    })
 
 def cart_view(request):
     cart = get_or_create_cart(request)
@@ -85,39 +57,37 @@ def cart_view(request):
     return render(request, "order/cart_view.html", context)
 
 def cart_add(request, product_id):
-    cart, _ = Cart.objects.get_or_create(
-        user=request.user if request.user.is_authenticated else None,
-        is_active=True
-    )
+    if request.method != "POST":
+        return HttpResponseRedirect(reverse("cart_view"))
 
     product = get_object_or_404(Product, id=product_id)
 
+    # ❌ Do not add if out of stock
+    if product.cached_quantity <= 0:
+        return HttpResponseRedirect(reverse("cart_view"))
+
+    cart = get_or_create_cart(request)
+
     item, created = CartItem.objects.get_or_create(
         cart=cart,
-        product=product
+        product=product,
+        defaults={"quantity": 1}
     )
 
     if not created:
-        item.quantity += 1
-    item.save()
+        # ❌ Respect stock limit
+        if item.quantity < product.cached_quantity:
+            item.quantity += 1
+            item.save()
 
-    return redirect("cart_view")
+    return HttpResponseRedirect(reverse("cart_view"))
 
 def cart_remove(request, item_id):
     item = get_object_or_404(CartItem, id=item_id)
     item.delete()
     return redirect("cart_view")
 
-def subcategories_api(request):
-    category_id = request.GET.get("category_id")
-    subcategories = []
-
-    if category_id:
-        subcategories_qs = SubCategory.objects.filter(category_id=category_id)
-        subcategories = [{"id": s.id, "name": s.name} for s in subcategories_qs]
-
-    return JsonResponse({"subcategories": subcategories})
-
+from django.db import transaction
 
 def checkout(request):
     cart = get_or_create_cart(request)
@@ -143,12 +113,13 @@ def checkout(request):
             profile = getattr(request.user, "profile", None)
 
             form.fields["customer_name"].widget.attrs["value"] = (
-                    request.user.get_full_name() or request.user.username
+                request.user.get_full_name() or request.user.username
             )
             form.fields["customer_email"].widget.attrs["value"] = request.user.email
-            form.fields["customer_phone"].widget.attrs["value"] = profile.phone if profile else ""
+            form.fields["customer_phone"].widget.attrs["value"] = (
+                profile.phone if profile else ""
+            )
 
-            # ✅ Correct way for select/textarea
             form.initial["district"] = profile.district if profile else ""
             form.initial["customer_address"] = profile.customer_address if profile else ""
             form.fields["order_type"].widget.attrs["value"] = "delivery"
@@ -160,13 +131,13 @@ def checkout(request):
     })
 
 
+@transaction.atomic
 def finalize_order(request, order, cart):
     items = cart.items.select_related("product")
-
     customer_name = order.customer_name
 
     message_lines = [
-        f"🧾 New Order #{order.id}",
+        f"New Order #{order.id}",
         f"Type: {order.get_order_type_display()}",
         "",
         "Items:",
@@ -179,9 +150,19 @@ def finalize_order(request, order, cart):
             messages.error(request, f"Not enough stock for {product.name}")
             return redirect("cart_view")
 
-        product.cached_quantity -= item.quantity
-        product.save()
+        # ✅ CREATE ORDER ITEM
+        OrderItem.objects.create(
+            order=order,
+            product=product,
+            quantity=item.quantity,
+            price=product.price,
+        )
 
+        # ✅ UPDATE STOCK
+        product.cached_quantity -= item.quantity
+        product.save(update_fields=["cached_quantity"])
+
+        # ✅ STOCK MOVEMENT
         StockMovement.objects.create(
             product=product,
             change=-item.quantity,
@@ -190,33 +171,162 @@ def finalize_order(request, order, cart):
 
         message_lines.append(f"- {product.name} x{item.quantity}")
 
-    message_lines.append("")
-    message_lines.append(f"👤 Customer: {customer_name}")
-    message_lines.append(f"📞 Phone: {order.customer_phone}")
-    message_lines.append(f"📍 Address: {order.customer_address}")
+    message_lines.extend([
+        "",
+        f"Customer: {customer_name}",
+        f"Phone: {order.customer_phone}",
+        f"District: {order.get_district_display()}",
+        f"Address: {order.customer_address}",
+    ])
 
-    whatsapp_message = "\n".join(message_lines)
+    email_body = "\n".join(message_lines)
 
-    # Reset cart
+    # ✅ SEND EMAIL
+    send_mail(
+        subject=f"New Order #{order.id}",
+        message=email_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[
+            settings.DEFAULT_FROM_EMAIL,  # store/admin
+            order.customer_email,         # optional: customer copy
+        ],
+        fail_silently=False,
+    )
+
+    # ✅ RESET CART
     cart.items.all().delete()
     cart.is_active = False
-    cart.save()
+    cart.save(update_fields=["is_active"])
 
-    # New cart
+    # ✅ CREATE NEW CART
     if request.user.is_authenticated:
         Cart.objects.create(user=request.user)
     else:
         new_cart = Cart.objects.create()
         request.session["cart_id"] = new_cart.id
 
-    messages.success(request, "Order placed successfully!")
+    messages.success(request, "Order placed successfully! Confirmation email sent.")
 
-    wa_link = build_whatsapp_link(
-        phone="96103291033",
-        message=whatsapp_message
+    return redirect("order_success")
+
+
+@require_POST
+def cart_update_quantity(request):
+    item_id = request.POST.get("item_id")
+    action = request.POST.get("action")
+
+    item = get_object_or_404(
+        CartItem,
+        id=item_id,
+        cart__user=request.user
     )
 
-    return redirect(wa_link)
+    product = item.product
+    max_stock = product.cached_quantity
+
+    if action == "increase":
+        # ❌ Do not exceed available stock
+        if item.quantity < max_stock:
+            item.quantity += 1
+        else:
+            return JsonResponse({
+                "blocked": "max",
+                "quantity": item.quantity,
+                "max_stock": max_stock,
+                "cart_total": item.cart.total_price(),
+            })
+
+    elif action == "decrease":
+        item.quantity -= 1
+
+        # ✅ Quantity = 0 → remove item
+        if item.quantity <= 0:
+            item.delete()
+            return JsonResponse({
+                "removed": True,
+                "cart_total": item.cart.total_price(),
+            })
+
+    item.save()
+
+    return JsonResponse({
+        "blocked": False,
+        "quantity": item.quantity,
+        "max_stock": max_stock,
+        "cart_total": item.cart.total_price(),
+    })
+
+
+# Only staff can access
+def staff_required(user):
+    return user.is_staff
+
+
+@login_required
+@user_passes_test(staff_required)
+def confirmed_orders(request):
+    today = timezone.localdate()
+    from_date = request.GET.get("from", today.strftime("%Y-%m-%d"))
+    to_date = request.GET.get("to", today.strftime("%Y-%m-%d"))
+    order_number = request.GET.get("order_number", "")
+
+    orders = Order.objects.filter(status="confirmed")
+
+    if from_date:
+        orders = orders.filter(created_at__date__gte=from_date)
+    if to_date:
+        orders = orders.filter(created_at__date__lte=to_date)
+    if order_number:
+        orders = orders.filter(id=order_number)
+
+    context = {
+        "orders": orders.order_by("-created_at"),
+        "from_date": from_date,
+        "to_date": to_date,
+        "order_number": order_number,
+    }
+    return render(request, "order/confirmed_orders.html", context)
+
+
+@login_required
+@user_passes_test(staff_required)
+def return_order(request, order_id):
+    """
+    Return/discard an order:
+    - Re-add all items to stock
+    - Log stock movement
+    - Mark order as returned
+    """
+
+    order = get_object_or_404(Order, id=order_id, status="confirmed")
+
+    order_items = order.items.select_related("product")
+
+    for item in order_items:
+        product = item.product
+        quantity = item.quantity
+
+        # ✅ Re-add stock
+        product.cached_quantity += quantity
+        product.save(update_fields=["cached_quantity"])
+
+        # ✅ Stock movement log
+        StockMovement.objects.create(
+            product=product,
+            change=quantity,
+            reason=f"Order #{order.id} returned"
+        )
+
+    # ✅ Mark order as returned
+    order.status = "returned"
+    order.save(update_fields=["status"])
+
+    messages.success(request, f"Order #{order.id} returned successfully.")
+
+    return redirect("confirmed_orders")
+
+def order_success(request):
+    return render(request, "order/success.html")
 
 
 

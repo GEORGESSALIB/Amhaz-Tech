@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container py-4">
+  <h2>Delete Product</h2>
+
+  <p>
+    Are you sure you want to delete
+    <strong>{{ product.name }}</strong>?
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+    <button class="btn btn-danger">Yes, delete</button>
+    <a href="javascript:history.back()" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+
+{% endblock %}

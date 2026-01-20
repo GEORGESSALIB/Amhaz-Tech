@@ -5,7 +5,7 @@
   <div class="row g-4">
 
     <!-- ================= CART PANEL ================= -->
-    <div class="col-lg-7">
+    <div class="col-lg-12">
       <div class="card shadow-sm border-0">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-3">
@@ -21,7 +21,7 @@
               <thead class="table-light">
                 <tr>
                   <th>Product</th>
-                  <th class="text-center" width="100">Qty</th>
+                  <th class="text-center" width="120">Qty</th>
                   <th class="text-end" width="120">Price</th>
                   <th width="60"></th>
                 </tr>
@@ -29,15 +29,45 @@
               <tbody>
                 {% for item in items %}
                 <tr>
-                  <td class="fw-medium">{{ item.product.name }}</td>
-                  <td class="text-center">
-                    <span class="badge bg-secondary">{{ item.quantity }}</span>
+                  <td class="fw-medium">
+                    {{ item.product.name }}
                   </td>
-                  <td class="text-end fw-semibold">${{ item.product.price }}</td>
+
+                  <td class="text-center">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <button
+                        class="btn btn-outline-secondary qty-btn"
+                        data-item-id="{{ item.id }}"
+                        data-action="decrease">
+                        −
+                      </button>
+
+                      <span
+                        class="badge bg-secondary px-3"
+                        id="qty-{{ item.id }}">
+                        {{ item.quantity }}
+                      </span>
+
+                      <button
+                        class="btn btn-outline-secondary qty-btn"
+                        data-item-id="{{ item.id }}"
+                        data-action="increase"
+                        data-max="{{ item.product.cached_quantity }}">
+                        +
+                      </button>
+                    </div>
+                  </td>
+
+                  <td class="text-end fw-semibold">
+                    ${{ item.product.price }}
+                  </td>
+
                   <td class="text-end">
                     <a href="{% url 'cart_remove' item.id %}"
                        class="btn btn-sm btn-outline-danger"
-                       title="Remove">✕</a>
+                       title="Remove">
+                      ✕
+                    </a>
                   </td>
                 </tr>
                 {% endfor %}
@@ -47,7 +77,9 @@
 
           <div class="d-flex justify-content-between align-items-center border-top pt-3">
             <span class="fw-semibold">Total</span>
-            <span class="fs-5 fw-bold text-primary">${{ cart.total_price }}</span>
+            <span class="fs-5 fw-bold text-primary">
+              ${{ cart.total_price }}
+            </span>
           </div>
 
           {% else %}
@@ -57,137 +89,75 @@
           {% endif %}
         </div>
       </div>
-             {% if items %}
-<a href="{% url 'place_order' %}" class="btn btn-success w-100 mt-3">
-  ✅ Make Order
-</a>
-{% endif %}
 
-    </div>
+      {% if items %}
+        <a href="{% url 'place_order' %}"
+           class="btn btn-success w-100 mt-3">
+          ✅ Make Order
+        </a>
+      {% endif %}
 
-
-    <!-- ================= PRODUCTS PANEL ================= -->
-    <div class="col-lg-5">
-      <div class="card shadow-sm border-0 mb-3">
-        <div class="card-body">
-          <h5 class="fw-semibold mb-3">Add Products</h5>
-
-          <!-- FILTERS -->
-          <form method="get" class="row g-2" id="filter-form">
-            <div class="col-6">
-              <select name="category" id="category-select" class="form-select form-select-sm">
-                <option value="">Category</option>
-                {% for c in categories %}
-                  <option value="{{ c.id }}"
-                    {% if selected_category == c.id|stringformat:"s" %}selected{% endif %}>
-                    {{ c.name }}
-                  </option>
-                {% endfor %}
-              </select>
-            </div>
-
-            <div class="col-6">
-              <select name="subcategory" id="subcategory-select" class="form-select form-select-sm">
-                <option value="">Subcategory</option>
-                {% for s in subcategories %}
-                  <option value="{{ s.id }}"
-                    {% if selected_subcategory == s.id|stringformat:"s" %}selected{% endif %}>
-                    {{ s.name }}
-                  </option>
-                {% endfor %}
-              </select>
-            </div>
-
-            <div class="col-12">
-              <input type="text"
-                     name="q"
-                     class="form-control form-control-sm"
-                     placeholder="Search products..."
-                     value="{{ query }}">
-            </div>
-
-            <div class="col-12">
-              <button class="btn btn-outline-secondary btn-sm w-100">
-                Apply Filters
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- PRODUCTS GRID -->
-      <div class="row g-3" style="max-height: 520px; overflow-y:auto;">
-        {% for p in products %}
-        <div class="col-6">
-          <div class="card h-100 border-0 shadow-sm product-card">
-            {% if p.photo %}
-              <img src="{{ p.photo.url }}"
-                   class="card-img-top"
-                   style="height:120px; object-fit:cover;">
-            {% endif %}
-            <div class="card-body p-2 d-flex flex-column">
-              <div class="mb-1 fw-semibold small">{{ p.name }}</div>
-              <div class="text-muted small mb-2">${{ p.price }}</div>
-
-              {% if p.cached_quantity == 0 %}
-                <span class="badge bg-danger mb-2">Out of stock</span>
-              {% elif p.cached_quantity <= 10 %}
-                <span class="badge bg-warning text-dark mb-2">Low stock</span>
-              {% else %}
-                <span class="badge bg-success mb-2">In stock</span>
-              {% endif %}
-
-              <a href="{% url 'cart_add_detail' p.id %}?next={{ request.get_full_path }}"
-                 class="btn btn-sm btn-primary mt-auto w-100">
-                Add
-              </a>
-            </div>
-          </div>
-        </div>
-        {% empty %}
-          <div class="text-muted text-center py-4">
-            No products found
-          </div>
-        {% endfor %}
-      </div>
     </div>
 
   </div>
 </div>
 
-<!-- ================= DYNAMIC SUBCATEGORY SCRIPT ================= -->
+<!-- ================= CART QUANTITY SCRIPT ================= -->
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    const categorySelect = document.getElementById("category-select");
-    const subcategorySelect = document.getElementById("subcategory-select");
-    const selectedSubcategory = "{{ selected_subcategory|default:'' }}";
+document.addEventListener("DOMContentLoaded", function () {
 
-    categorySelect.addEventListener("change", function() {
-        const categoryId = this.value;
+    document.querySelectorAll(".qty-btn").forEach(btn => {
+        btn.addEventListener("click", function () {
+            const itemId = this.dataset.itemId;
+            const action = this.dataset.action;
 
-        // Clear subcategories
-        subcategorySelect.innerHTML = '<option value="">Subcategory</option>';
-
-        if (!categoryId) return;
-
-        fetch(`/order/api/subcategories/?category_id=${categoryId}`)
+            fetch("{% url 'cart_update_quantity' %}", {
+                method: "POST",
+                headers: {
+                    "X-CSRFToken": "{{ csrf_token }}",
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
+                body: new URLSearchParams({
+                    item_id: itemId,
+                    action: action
+                })
+            })
             .then(response => response.json())
             .then(data => {
-                data.subcategories.forEach(sub => {
-                    const option = document.createElement("option");
-                    option.value = sub.id;
-                    option.textContent = sub.name;
 
-                    // Preserve previously selected subcategory if still valid
-                    if (sub.id == selectedSubcategory) {
-                        option.selected = true;
-                    }
+                if (data.removed) {
+                    location.reload();
+                    return;
+                }
 
-                    subcategorySelect.appendChild(option);
-                });
+                // Update quantity
+                const qtyEl = document.getElementById(`qty-${itemId}`);
+                if (qtyEl) {
+                    qtyEl.textContent = data.quantity;
+                }
+
+                // Update cart total
+                const totalEl = document.querySelector(
+                    ".fs-5.fw-bold.text-primary"
+                );
+                if (totalEl) {
+                    totalEl.textContent = `$${data.cart_total}`;
+                }
+
+                // Disable "-" if quantity is 0 or 1 (depending on your rule)
+                const minusBtn = document.querySelector(
+                    `.qty-btn[data-item-id="${itemId}"][data-action="decrease"]`
+                );
+                if (minusBtn) {
+                    minusBtn.disabled = (data.quantity <= 1);
+                }
             })
-            .catch(error => console.error("Error fetching subcategories:", error));
+            .catch(error =>
+                console.error("Cart update error:", error)
+            );
+        });
     });
+
 });
 </script>
 

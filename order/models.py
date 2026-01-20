@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import RegexValidator
 from django.db import models
 from products.models import Product
 
@@ -54,6 +55,11 @@ class CartItem(models.Model):
         return f"{self.product.name} x {self.quantity}"
 
 
+phone_validator = RegexValidator(
+    regex=r'^\+?\d{7,15}$',
+    message="Enter a valid phone number."
+)
+
 class Order(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -65,7 +71,10 @@ class Order(models.Model):
     # 👇 NEW: customer info (for guests + logged users)
     customer_name = models.CharField(max_length=120)
     customer_email = models.EmailField()
-    customer_phone = models.CharField(max_length=30)
+    customer_phone = models.CharField(
+        max_length=30,
+        validators=[phone_validator]
+    )
     DISTRICT_CHOICES = [
         ("akkar", "Akkar - عكار"),
         ("aley", "Aley - عاليه"),
@@ -104,7 +113,7 @@ class Order(models.Model):
     status = models.CharField(
         max_length=20,
         choices=[
-            ('not_confirmed', 'Not Confirmed'),
+            ('returned', 'Returned'),
             ('confirmed', 'Confirmed'),
         ]
     )
@@ -112,12 +121,21 @@ class Order(models.Model):
     order_type = models.CharField(
         max_length=20,
         choices=[
-            ('delivery', 'Delivery'),
-            ('take_from_store', 'Take From Store'),
+            ('delivery', 'Cash On Delivery'),
         ],
         default='delivery'
     )
 
     def __str__(self):
         return f"Order {self.id} - {self.customer_name}"
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, related_name="items", on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.PROTECT)
+    quantity = models.PositiveIntegerField(default=1)
+    price = models.FloatField()  # snapshot of product price at time of order
+
+    def __str__(self):
+        return f"{self.product.name} x {self.quantity}"
+
 

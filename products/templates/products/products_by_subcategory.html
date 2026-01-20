@@ -50,16 +50,28 @@
           {% endif %}
         </div>
 
+        <!-- STAFF ACTIONS -->
+        {% if request.user.is_staff %}
+          <div class="d-flex gap-2 mb-2">
+            <a href="{% url 'product_edit' product.id %}"
+               class="btn btn-sm btn-outline-primary w-50">
+              Edit
+            </a>
+          </div>
+        {% endif %}
+
         <!-- Spacer -->
         <div class="mt-auto"></div>
 
-        <!-- CTA -->
+        <!-- CART CTA -->
         {% if product.cached_quantity > 0 %}
-          <a href="{% url 'cart_add_detail' product.id %}?next={{ request.path }}"
-               class="btn btn-primary w-100">
+          <form method="post"
+                action="{% url 'cart_add' product.id %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-primary w-100">
               Add to Cart
-          </a>
-
+            </button>
+          </form>
         {% else %}
           <button class="btn btn-secondary w-100" disabled>
             Unavailable

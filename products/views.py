@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Sum
 from django.db.models.functions import TruncDate
 from django.shortcuts import render, get_object_or_404, redirect
@@ -169,4 +169,33 @@ def remove_stock(request, product_id):
     else:
         form = StockForm()
     return render(request, 'dashboard/stock_form.html', {'form': form, 'product': product, 'action': 'Remove'})
+
+def staff_required(user):
+    return user.is_staff
+
+@login_required
+@user_passes_test(staff_required)
+def product_edit(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+
+    if request.method == "POST":
+        form = ProductForm(request.POST, request.FILES, instance=product)
+
+        # 🔒 lock stock
+        form.fields["cached_quantity"].disabled = True
+
+        if form.is_valid():
+            form.save()
+            return redirect("products_by_subcategory", product.category.id)
+    else:
+        form = ProductForm(instance=product)
+
+        # 🔒 lock stock
+        form.fields["cached_quantity"].disabled = True
+
+    return render(request, "products/product_form.html", {
+        "form": form,
+        "product": product,
+    })
+
 

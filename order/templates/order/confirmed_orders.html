@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container py-4">
+
+  <h2 class="mb-4">Confirmed Orders</h2>
+
+  <!-- FILTER FORM -->
+  <form method="get" class="row g-2 mb-4">
+    <div class="col-md-3">
+      <input type="date" name="from" value="{{ from_date }}" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <input type="date" name="to" value="{{ to_date }}" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <input type="text" name="order_number" placeholder="Order ID" value="{{ order_number }}" class="form-control">
+    </div>
+    <div class="col-md-3">
+      <button class="btn btn-primary w-100">Filter</button>
+    </div>
+  </form>
+
+  {% if orders %}
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th>
+          <th>Customer</th>
+          <th>Phone</th>
+          <th>District</th>
+          <th>Items</th>
+          <th>Created At</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+        <tr>
+          <td>{{ order.id }}</td>
+          <td>{{ order.customer_name }}</td>
+          <td>{{ order.customer_phone }}</td>
+          <td>{{ order.district }}</td>
+          <td>
+              <ul class="mb-0">
+                {% for item in order.items.all %}
+                  <li>{{ item.product.name }} x {{ item.quantity }}</li>
+                {% empty %}
+                  <li>No items</li>
+                {% endfor %}
+              </ul>
+          </td>
+
+          <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+          <td>
+            <a href="{% url 'return_order' order.id %}"
+               class="btn btn-sm btn-danger"
+               onclick="return confirm('Are you sure you want to return this order?')">
+               Return
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <p class="text-muted">No confirmed orders found.</p>
+  {% endif %}
+
+</div>
+
+{% endblock %}
