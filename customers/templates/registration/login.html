@@ -1,7 +1,104 @@
-<h2>Login</h2>
+{% extends "base.html"%}
+{% block content %}
 
-<form method="post">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit">Login</button>
-</form>
+<div class="auth-container d-flex flex-column align-items-center justify-content-center py-5">
+
+  <h2 class="auth-title mb-4 text-center">Login</h2>
+
+  <form method="post" class="auth-form mb-3 w-100" style="max-width: 400px;">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <!-- Scoped button class -->
+    <button type="submit" class="auth-btn btn w-100 btn-lg mt-3">
+      Login
+    </button>
+  </form>
+
+  <div class="auth-links d-flex justify-content-between w-100" style="max-width: 400px;">
+    <a href="{% url 'signup' %}" class="text-decoration-none text-primary fw-medium">
+      Create an account
+    </a>
+
+    <a href="{% url 'password_reset' %}" class="text-decoration-none text-muted fw-medium">
+      Forgot your password?
+    </a>
+  </div>
+
+</div>
+
+<!-- ================= AUTH PAGE STYLES ONLY ================= -->
+<style>
+.auth-container {
+  min-height: calc(100vh - 70px);
+  padding: 3rem 1rem;
+  background: linear-gradient(135deg, #f9fafb, #eef2f7);
+}
+
+.auth-title {
+  font-weight: 700;
+  font-size: 2rem;
+  color: #0f172a;
+}
+
+.auth-form input[type="text"],
+.auth-form input[type="password"],
+.auth-form input[type="email"] {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.auth-form input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+  outline: none;
+}
+
+/* Scoped button style - does NOT affect navbar buttons */
+.auth-btn {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  border: none;
+  font-weight: 600;
+  padding: 0.65rem 1rem;
+  font-size: 1rem;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  color: #fff;
+}
+
+.auth-btn:hover {
+  background: linear-gradient(135deg, #1e40af, #2563eb);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.3);
+}
+
+.auth-links a {
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.auth-links a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 576px) {
+  .auth-container {
+    padding: 2rem 1rem;
+  }
+  .auth-form {
+    width: 100%;
+  }
+  .auth-links {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: center;
+  }
+}
+</style>
+
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Subcategories of "{{ category.name }}"</h2>
+
+<div class="mb-3 d-flex gap-2">
+    <a href="{% url 'subcategory_add' category.id %}" class="btn btn-success">
+        + Add SubCategory
+    </a>
+    <a href="{% url 'category_list' %}" class="btn btn-secondary">
+        ← Back to Categories
+    </a>
+</div>
+
+<table class="table table-striped table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th style="width:5%;">ID</th>
+            <th style="width:35%;">Name</th>
+            <th style="width:20%;">Active</th>
+            <th style="width:20%;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for sub in subcategories %}
+        <tr>
+            <td>{{ sub.id }}</td>
+            <td>{{ sub.name }}</td>
+            <td>
+                {% if sub.is_active %}
+                    <span class="badge bg-primary">Active</span>
+                {% else %}
+                    <span class="badge bg-secondary">Archived</span>
+                {% endif %}
+            </td>
+            <td class="d-flex gap-2">
+                <a href="{% url 'subcategory_edit' sub.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4" class="text-muted text-center">No subcategories found for this category.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,260 +1,320 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>{% block title %}MyStore{% endblock %}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<title>{% block title %}Amhaz Tech{% endblock %}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Bootstrap 5 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<!-- Bootstrap -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
-  <style>
-    :root {
-      --sidebar-width: 250px;
-      --sidebar-bg: #1f2937;
-      --sidebar-color: #e5e7eb;
-      --sidebar-hover: #374151;
-      --primary-color: #0d6efd;
-    }
+<!-- Font -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    body {
-      font-family: "Segoe UI", sans-serif;
-      background: #f8f9fa;
-      overflow-x: hidden;
-    }
-
-    /* Sidebar */
-    .sidebar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: var(--sidebar-width);
-      height: 100%;
-      background-color: var(--sidebar-bg);
-      color: var(--sidebar-color);
-      overflow-y: auto;
-      transform: translateX(0);
-      transition: transform 0.3s ease;
-      z-index: 999;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .sidebar.hidden {
-      transform: translateX(-100%);
-    }
-
-    /* Logo */
-    .sidebar .logo {
-      text-align: center;
-      padding: 1rem;
-      border-bottom: 1px solid #374151;
-    }
-
-    .sidebar .logo h4 {
-      margin: 0;
-      font-weight: bold;
-      color: #fff;
-    }
-
-    /* Links */
-    .sidebar a {
-      color: var(--sidebar-color);
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.5rem 1rem;
-      text-decoration: none;
-      border-radius: 4px;
-      transition: background 0.2s;
-    }
-
-    .sidebar a:hover {
-      background-color: var(--sidebar-hover);
-    }
-
-    .sidebar a.active {
-      background-color: var(--primary-color);
-      color: #fff;
-    }
-
-    /* Accordion */
-    .accordion-button {
-      background: none;
-      color: var(--sidebar-color);
-      padding: 0.5rem 1rem;
-    }
-
-    .accordion-button:not(.collapsed) {
-      background-color: var(--sidebar-hover);
-    }
-
-    .accordion-body {
-      padding-left: 1rem;
-    }
-
-    /* Main content */
-    .content {
-      margin-left: var(--sidebar-width);
-      transition: margin-left 0.3s ease;
-    }
-
-    .content.full {
-      margin-left: 0;
-    }
-
-    /* Topbar */
-    .topbar {
-      height: 60px;
-      background: #fff;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 1rem;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-    }
-
-    /* Toggle button */
-    #sidebarToggle {
-      cursor: pointer;
-      font-size: 1.25rem;
-    }
-
-    /* Mobile */
-    @media (max-width: 768px) {
-      .sidebar {
-        transform: translateX(-100%);
-      }
-      .sidebar.show {
-        transform: translateX(0);
-      }
-      .content {
-        margin-left: 0;
-      }
-    }
-      /* WhatsApp Floating Button */
-.whatsapp-float {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 2000;
+<style>
+:root {
+  --primary: #2563eb;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --silver-100: #f8fafc;
+  --silver-200: #f1f5f9;
+  --silver-300: #e5e7eb;
+  --shadow-soft: 0 30px 60px rgba(0,0,0,.08);
 }
 
-.whatsapp-float a {
-  width: 52px;
-  height: 52px;
-  background-color: #25d366;
-  color: white;
-  border-radius: 50%;
+body {
+  font-family: Inter, system-ui, sans-serif;
+  background: linear-gradient(180deg, #fff, var(--silver-100));
+  color: var(--text-main);
+  margin: 0;
+}
+
+/* ================= TOPBAR ================= */
+.topbar {
+  height: 74px;
+  background: rgba(255,255,255,.94);
+  backdrop-filter: blur(14px);
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 24px;
+  justify-content: space-between;
+  padding: 0 2rem;
+  border-bottom: 1px solid var(--silver-300);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* ================= BRAND ================= */
+.top-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
   text-decoration: none;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  color: inherit;
 }
 
-.whatsapp-float a:hover {
-  transform: scale(1.08);
-  box-shadow: 0 6px 14px rgba(0,0,0,0.3);
+.top-brand img {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
 }
 
-  </style>
+.top-brand strong {
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+/* ================= SEARCH ================= */
+.search-bar {
+  width: 420px;
+  position: relative;
+}
+
+.search-bar input {
+  width: 100%;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--silver-300);
+  padding: 0 3rem 0 1.2rem;
+}
+
+.search-bar button {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: white;
+  height: 34px;
+  width: 34px;
+  border-radius: 50%;
+}
+
+/* ================= CATEGORIES ================= */
+.nav-dropdown .dropdown-menu {
+  border-radius: 18px;
+  padding: 1.2rem;
+  box-shadow: var(--shadow-soft);
+  border: none;
+}
+
+.nav-dropdown a {
+  display: block;
+  padding: .45rem .6rem;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--text-main);
+}
+
+.nav-dropdown a:hover {
+  background: rgba(37,99,235,.08);
+  color: var(--primary);
+}
+
+/* ================= CART ================= */
+#cartIcon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .55rem 1.2rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: white;
+  text-decoration: none;
+}
+
+#cartCount {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #ef4444;
+  font-size: .7rem;
+  padding: .15rem .45rem;
+  border-radius: 999px;
+}
+
+/* ================= AUTH ================= */
+.auth-btn {
+  padding: .45rem 1.2rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.auth-login {
+  border: 1px solid var(--silver-300);
+  background: white;
+}
+
+.auth-signup {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: white;
+  border: none;
+}
+
+/* ================= ADMIN ================= */
+.admin-btn {
+  background: var(--silver-200);
+  border-radius: 999px;
+  padding: .45rem .9rem;
+  border: none;
+}
+
+.admin-menu {
+  min-width: 220px;
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+  border: none;
+  padding: .6rem;
+}
+
+.admin-menu a {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .55rem .75rem;
+  border-radius: 12px;
+  text-decoration: none;
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.admin-menu a:hover {
+  background: rgba(37,99,235,.08);
+  color: var(--primary);
+}
+
+/* ================= MAIN ================= */
+main {
+  padding: 2.2rem;
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 992px) {
+  .search-bar { display: none; }
+}
+
+/* ================= WHATSAPP ================= */
+.whatsapp-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background-color: #25D366;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  z-index: 1100;
+  text-decoration: none;
+}
+</style>
 </head>
+
 <body>
 
-<!-- Sidebar -->
-<div class="sidebar" id="sidebar">
+<!-- SIDEBAR (KEPT EMPTY FOR JS SAFETY) -->
+<div id="sidebar" style="display:none;"></div>
 
-  <!-- Logo -->
-  <div class="logo mb-4">
-    <h4>MyStore</h4>
-  </div>
+<!-- CONTENT -->
+<div id="mainContent" class="content full">
 
-  <!-- Categories Accordion -->
-  <div class="accordion" id="categoryAccordion">
-    {% for category in nav_categories %}
-    <div class="accordion-item bg-transparent border-0">
-      <h2 class="accordion-header">
-        <button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#cat{{ category.id }}">
-          <i class="bi bi-folder"></i>
-          <span>{{ category.name }}</span>
+  <!-- TOPBAR -->
+  <div class="topbar">
+
+    <!-- BRAND -->
+    <a href="{% url 'home' %}" class="top-brand">
+      <img src="{% static 'images/logo.jpeg' %}">
+      <strong>Amhaz Tech</strong>
+    </a>
+
+    <!-- SEARCH -->
+    <form method="get" action="{% url 'product_search' %}" class="search-bar">
+      <input type="text" name="q" placeholder="Search products..." value="{{ search_query|default:'' }}">
+      <button><i class="bi bi-search"></i></button>
+    </form>
+
+    <!-- RIGHT -->
+    <div class="d-flex align-items-center gap-3">
+
+      <!-- CATEGORIES -->
+      <div class="dropdown nav-dropdown">
+        <button class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown">
+          Categories
         </button>
-      </h2>
-      <div id="cat{{ category.id }}" class="accordion-collapse collapse" data-bs-parent="#categoryAccordion">
-        <div class="accordion-body py-1">
-          <ul class="list-unstyled ps-3">
-            {% for sub in category.subcategory_set.all %}
-            <li>
-              <a href="{% url 'products_by_subcategory' sub.id %}">
-                <i class="bi bi-tag"></i>
-                <span>{{ sub.name }}</span>
-              </a>
-            </li>
+        <div class="dropdown-menu">
+          {% for category in nav_categories %}
+            <strong class="d-block mb-1">{{ category.name }}</strong>
+            {% for sub in category.active_subcategories %}
+              <a href="{% url 'products_by_subcategory' sub.id %}">{{ sub.name }}</a>
             {% endfor %}
-          </ul>
+            <hr>
+          {% endfor %}
         </div>
       </div>
-    </div>
-    {% endfor %}
-  </div>
 
-</div>
+      <!-- CART -->
+      <a href="{% url 'cart_view' %}" id="cartIcon">
+        <i class="bi bi-basket3-fill"></i>
+        <span id="cartCount">{{ cart_count }}</span>
+      </a>
 
-<!-- Main Content -->
-<div class="content" id="mainContent">
-
-  <!-- Topbar -->
-  <div class="topbar d-flex justify-content-between align-items-center">
-    <span id="sidebarToggle"><i class="bi bi-list"></i></span>
-
-    <div class="d-flex align-items-center gap-2">
+      <!-- AUTH / ADMIN -->
       {% if user.is_authenticated %}
-        <span>Hello, <strong>{{ user.username }}</strong></span>
-        <form method="post" action="{% url 'logout' %}">
-          {% csrf_token %}
-          <button class="btn btn-outline-danger btn-sm">Logout</button>
-        </form>
+        <div class="dropdown">
+          <button class="admin-btn dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-gear"></i>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end admin-menu">
+            {% if request.user.is_staff %}
+              <a href="{% url 'category_list' %}"><i class="bi bi-folder2-open"></i> Categories</a>
+              <a href="{% url 'dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+              <a href="{% url 'confirmed_orders' %}"><i class="bi bi-check2-square"></i> Orders</a>
+              <hr>
+            {% endif %}
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button class="btn btn-outline-danger btn-sm w-100">Logout</button>
+            </form>
+          </div>
+        </div>
       {% else %}
-        <a href="{% url 'login' %}" class="btn btn-outline-primary btn-sm">Login</a>
-        <a href="{% url 'signup' %}" class="btn btn-primary btn-sm">Sign up</a>
+        <a href="{% url 'login' %}" class="auth-btn auth-login">Login</a>
+        <a href="{% url 'signup' %}" class="auth-btn auth-signup">Sign up</a>
       {% endif %}
     </div>
   </div>
 
-  <!-- Page Content -->
-  <main class="p-4">
-    {% block content %}{% endblock %}
-  </main>
+  <main>{% block content %}{% endblock %}</main>
 </div>
 
-<!-- Bootstrap JS -->
+<!-- WHATSAPP -->
+<a href="https://wa.me/96179102926" target="_blank" class="whatsapp-btn">
+  <i class="bi bi-whatsapp text-white fs-4"></i>
+</a>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Sidebar Toggle JS -->
+<!-- SAFE JS (UNCHANGED LOGIC) -->
 <script>
+document.addEventListener("DOMContentLoaded", () => {
   const sidebar = document.getElementById('sidebar');
   const content = document.getElementById('mainContent');
-  const toggleBtn = document.getElementById('sidebarToggle');
+  const sidebarToggle = document.getElementById('sidebarToggle');
 
-  toggleBtn.addEventListener('click', () => {
-    sidebar.classList.toggle('hidden'); // fully hide/show
-    content.classList.toggle('full');   // expand content
-  });
+  if (sidebarToggle) {
+    sidebarToggle.onclick = () => {
+      sidebar.classList.toggle('hidden');
+      content.classList.toggle('full');
+    };
+  }
+});
 </script>
-
-<!-- WhatsApp Floating Button -->
-<div class="whatsapp-float">
-  <a href="https://wa.me/96103291033" target="_blank" aria-label="Chat on WhatsApp">
-    <i class="bi bi-whatsapp"></i>
-  </a>
-</div>
 
 </body>
 </html>

@@ -1,1 +1,219 @@
-Hello World!
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<style>
+/* ======================
+   HERO – BRAND PRESENCE
+====================== */
+.hero {
+  background: linear-gradient(135deg, #020617, #1e40af);
+  color: white;
+  padding: 110px 20px;
+  border-radius: 22px;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255,255,255,0.12), transparent 40%),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.08), transparent 45%);
+  animation: glow 10s ease-in-out infinite;
+}
+
+@keyframes glow {
+  0%,100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+.hero h1 {
+  font-size: 3.2rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.hero p {
+  max-width: 650px;
+  margin: 20px auto 0;
+  font-size: 1.15rem;
+  color: #e5e7eb;
+}
+
+/* ======================
+   FLOATING DEVICES
+====================== */
+.device {
+  position: absolute;
+  opacity: 0.15;
+  animation: float 8s ease-in-out infinite;
+}
+
+.device.one { top: 20%; left: 8%; font-size: 70px; }
+.device.two { bottom: 25%; right: 10%; font-size: 80px; animation-delay: 2s; }
+.device.three { top: 60%; left: 15%; font-size: 60px; animation-delay: 4s; }
+
+@keyframes float {
+  0%,100% { transform: translateY(0); }
+  50% { transform: translateY(25px); }
+}
+
+/* ======================
+   INFO CARDS
+====================== */
+.info-card {
+  background: white;
+  border-radius: 18px;
+  padding: 35px 30px;
+  text-align: center;
+  height: 100%;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.08);
+  transition: transform .4s ease;
+}
+
+.info-card:hover {
+  transform: translateY(-10px);
+}
+
+.info-icon {
+  font-size: 42px;
+  margin-bottom: 18px;
+  color: #1e40af;
+}
+
+/* ======================
+   BRAND STRIP
+====================== */
+.brand-strip {
+  background: #020617;
+  border-radius: 20px;
+  padding: 60px 30px;
+  color: #e5e7eb;
+}
+
+.brand-item {
+  opacity: 0.7;
+  transition: opacity .3s;
+}
+
+.brand-item:hover {
+  opacity: 1;
+}
+
+/* ======================
+   STAT NUMBERS
+====================== */
+.stat {
+  text-align: center;
+}
+
+.stat h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1e40af;
+}
+</style>
+
+<!-- ================= HERO ================= -->
+<div class="container my-5">
+  <div class="hero">
+    <div class="device one">📱</div>
+    <div class="device two">💻</div>
+    <div class="device three">🎧</div>
+
+    <div class="hero-content">
+      <img src="{% static 'images/logo.jpeg' %}"
+     alt="Amhaz Tech"
+     style="
+       width: 150px;
+       border-radius: 50%;
+       background: white;
+       padding: 18px;
+       box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+     ">
+
+      <h1 class="mt-4">Electronics, Done Right</h1>
+      <p>
+        A curated electronics store focused on quality, reliability, and
+        products that genuinely improve your daily digital life.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ================= WHAT WE OFFER ================= -->
+<div class="container my-5">
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="info-card">
+        <div class="info-icon">📱</div>
+        <h5>Smart Devices</h5>
+        <p class="text-muted">
+          Smartphones and tablets selected for performance, durability,
+          and long-term value.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="info-card">
+        <div class="info-icon">💻</div>
+        <h5>Computing Power</h5>
+        <p class="text-muted">
+          Laptops and workstations for students, professionals, and creatives.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="info-card">
+        <div class="info-icon">🎧</div>
+        <h5>Essential Accessories</h5>
+        <p class="text-muted">
+          Accessories that complement your setup — practical, reliable,
+          and tested.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= BRAND STATEMENT ================= -->
+<div class="container my-5">
+  <div class="brand-strip text-center">
+    <h2 class="mb-3">Built on Trust & Experience</h2>
+    <p class="mb-0">
+      We focus on authentic products, transparent pricing,
+      and long-term customer satisfaction — not short-term hype.
+    </p>
+  </div>
+</div>
+
+<!-- ================= STATS ================= -->
+<div class="container my-5">
+  <div class="row g-4">
+    <div class="col-md-4 stat">
+      <h2>100%</h2>
+      <p class="text-muted">Original Products</p>
+    </div>
+    <div class="col-md-4 stat">
+      <h2>24/7</h2>
+      <p class="text-muted">Customer Assistance</p>
+    </div>
+    <div class="col-md-4 stat">
+      <h2>Top</h2>
+      <p class="text-muted">Tech Brands</p>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

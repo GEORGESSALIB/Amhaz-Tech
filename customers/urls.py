@@ -6,6 +6,7 @@ from django.contrib.auth import views as auth_views
 urlpatterns = [
     path('signup/', signup, name='signup'),
     path('activate/<uidb64>/<token>/', activate, name='activate'),
+
 path(
         'password-reset/',
         auth_views.PasswordResetView.as_view(

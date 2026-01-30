@@ -1,5 +1,7 @@
 from django.conf import settings
 from django.db import models
+from phonenumber_field.modelfields import PhoneNumberField
+
 
 class UserProfile(models.Model):
     user = models.OneToOneField(
@@ -8,7 +10,10 @@ class UserProfile(models.Model):
         related_name="profile"
     )
 
-    phone = models.CharField(max_length=30, blank=True)
+    customer_phone = PhoneNumberField(
+        region="LB",
+        blank=False
+    )
     DISTRICT_CHOICES = [
         ("akkar", "Akkar - عكار"),
         ("aley", "Aley - عاليه"),
@@ -40,6 +45,7 @@ class UserProfile(models.Model):
 
     district = models.CharField(max_length=50, choices=DISTRICT_CHOICES, blank=True)
     customer_address = models.TextField(blank=True, default='')
+    building_name = models.CharField(max_length=50, blank=True)
 
     def __str__(self):
         return f"{self.user.username} profile"

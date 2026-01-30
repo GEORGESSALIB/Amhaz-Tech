@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db import models
 from products.models import Product
+from phonenumber_field.modelfields import PhoneNumberField
 
 
 class Cart(models.Model):
@@ -54,12 +55,6 @@ class CartItem(models.Model):
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
 
-
-phone_validator = RegexValidator(
-    regex=r'^\+?\d{7,15}$',
-    message="Enter a valid phone number."
-)
-
 class Order(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -71,9 +66,9 @@ class Order(models.Model):
     # 👇 NEW: customer info (for guests + logged users)
     customer_name = models.CharField(max_length=120)
     customer_email = models.EmailField()
-    customer_phone = models.CharField(
-        max_length=30,
-        validators=[phone_validator]
+    customer_phone = PhoneNumberField(
+        region="LB",
+        blank=False
     )
     DISTRICT_CHOICES = [
         ("akkar", "Akkar - عكار"),
@@ -105,7 +100,8 @@ class Order(models.Model):
     ]
 
     district = models.CharField(max_length=50, choices=DISTRICT_CHOICES, blank=True)
-    customer_address = models.TextField(blank=True)
+    customer_address = models.CharField(blank=True)
+    building_name = models.CharField(max_length=50, blank=True)
 
 
     created_at = models.DateTimeField(auto_now_add=True)

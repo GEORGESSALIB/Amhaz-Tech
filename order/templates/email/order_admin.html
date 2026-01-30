@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>New Order #{{ order.id }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 700px;
+            background: #ffffff;
+            margin: auto;
+            padding: 20px;
+            border-radius: 6px;
+        }
+        h2 {
+            color: #b00020;
+            margin-top: 0;
+        }
+        .section {
+            margin-top: 20px;
+        }
+        .label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 6px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            font-size: 14px;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 13px;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🚨 New Order Received</h2>
+
+    <p><strong>Order ID:</strong> #{{ order.id }}</p>
+    <p><strong>Order Type:</strong> {{ order.get_order_type_display }}</p>
+
+    <!-- ================= CUSTOMER INFO ================= -->
+    <div class="section">
+        <div class="label">Customer Details</div>
+        <p>
+            👤 {{ order.customer_name }}<br>
+            📞 {{ order.customer_phone }}<br>
+            📧 {{ order.customer_email }}<br>
+            📍 {{ order.get_district_display }}<br>
+            🏠 {{ order.customer_address }}<br>
+            🏢 {{ order.building_name }}
+        </p>
+    </div>
+
+<!-- ================= ITEMS ================= -->
+<div class="section">
+    <div class="label">Ordered Items</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th style="width: 80px;">Qty</th>
+                <th>Item Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>${{ item.product.price|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="2" style="text-align:right;font-weight:bold;">Total Price</td>
+                <td style="font-weight:bold;">${{ total_price|floatformat:2 }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+
+    <div class="footer">
+        Internal notification – action required.
+    </div>
+</div>
+
+</body>
+</html>

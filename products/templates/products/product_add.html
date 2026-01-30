@@ -2,13 +2,211 @@
 {% block title %}Add Product{% endblock %}
 
 {% block content %}
-<h2>Add Product to "{{ subcategory.name }}"</h2>
+<div class="add-product-wrapper">
 
-<form method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  {{ form.as_p }}
+  <div class="add-product-card">
 
-  <button type="submit" class="btn btn-success">Save Product</button>
-  <a href="{% url 'products_by_subcategory' subcategory.id %}" class="btn btn-secondary">Cancel</a>
-</form>
+    <!-- Header -->
+    <div class="add-product-header">
+      <h1>Add Product</h1>
+      <p>Add a new product under <strong>{{ subcategory.name }}</strong></p>
+    </div>
+
+    <!-- Form -->
+    <form method="post" enctype="multipart/form-data" class="add-product-form">
+      {% csrf_token %}
+
+      {% for field in form %}
+        <div class="form-row {% if field.field.widget.input_type == 'checkbox' %}checkbox-row{% endif %}">
+
+          {% if field.field.widget.input_type == 'checkbox' %}
+            <label class="checkbox-label">
+              {{ field }}
+              <span>{{ field.label }}</span>
+            </label>
+          {% else %}
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+          {% endif %}
+
+          {% if field.help_text %}
+            <small class="help-text">{{ field.help_text }}</small>
+          {% endif %}
+
+          {% for error in field.errors %}
+            <small class="error-text">{{ error }}</small>
+          {% endfor %}
+        </div>
+      {% endfor %}
+
+      <!-- Actions -->
+      <div class="form-actions">
+        <a href="{% url 'products_by_subcategory' subcategory.id %}"
+           class="btn-cancel">
+          Cancel
+        </a>
+        <button type="submit" class="btn-primary-action">
+          Save Product
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+<style>
+/* ================= WRAPPER ================= */
+.add-product-wrapper {
+  max-width: 760px;
+  margin: 3rem auto;
+  padding: 0 1.5rem;
+}
+
+/* ================= CARD ================= */
+.add-product-card {
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 25px 50px rgba(0,0,0,.08);
+  overflow: hidden;
+}
+
+/* ================= HEADER ================= */
+.add-product-header {
+  padding: 2rem 2.2rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.add-product-header h1 {
+  font-size: 1.7rem;
+  font-weight: 700;
+  margin: 0 0 .35rem;
+  color: #0f172a;
+}
+
+.add-product-header p {
+  margin: 0;
+  font-size: .95rem;
+  color: #64748b;
+}
+
+/* ================= FORM ================= */
+.add-product-form {
+  padding: 2rem 2.2rem 2.4rem;
+}
+
+.form-row {
+  margin-bottom: 1.4rem;
+}
+
+.form-row label {
+  display: block;
+  font-size: .85rem;
+  font-weight: 600;
+  margin-bottom: .4rem;
+  color: #1f2933;
+}
+
+/* ================= INPUTS ================= */
+input,
+select,
+textarea {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  padding: .7rem .85rem;
+  font-size: .95rem;
+  background: #fff;
+  transition: border .15s ease, box-shadow .15s ease;
+}
+
+textarea {
+  min-height: 120px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: #334155;
+  box-shadow: 0 0 0 3px rgba(51,65,85,.15);
+}
+
+/* ================= CHECKBOX FIX ================= */
+.checkbox-row {
+  margin-top: 1.8rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  font-size: .9rem;
+  font-weight: 500;
+  color: #1f2933;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #334155;
+}
+
+/* ================= HELP / ERROR ================= */
+.help-text {
+  display: block;
+  margin-top: .35rem;
+  font-size: .75rem;
+  color: #6b7280;
+}
+
+.error-text {
+  display: block;
+  margin-top: .35rem;
+  font-size: .75rem;
+  color: #dc2626;
+}
+
+/* ================= ACTIONS ================= */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: .75rem;
+  margin-top: 2.4rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ================= BUTTONS ================= */
+.btn-cancel {
+  padding: .6rem 1.4rem;
+  border-radius: 999px;
+  font-size: .85rem;
+  font-weight: 600;
+  color: #475569;
+  text-decoration: none;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+}
+
+.btn-cancel:hover {
+  background: #f8fafc;
+}
+
+.btn-primary-action {
+  padding: .6rem 1.8rem;
+  border-radius: 999px;
+  font-size: .85rem;
+  font-weight: 600;
+  border: none;
+  color: #fff;
+  background: #0f172a;
+}
+
+.btn-primary-action:hover {
+  background: #020617;
+}
+</style>
 {% endblock %}

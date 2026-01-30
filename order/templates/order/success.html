@@ -1,1 +1,27 @@
-Congrats your order has been received !
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container py-5">
+  <div class="text-center">
+
+    <i class="bi bi-check-circle-fill text-success fs-1 mb-3"></i>
+
+    <h2 class="fw-bold mb-2">Order Received 🎉</h2>
+    <p class="text-muted mb-4">
+      Thank you! Your order has been successfully placed and is being processed.
+    </p>
+
+    <div class="d-flex justify-content-center gap-3">
+      <a href="{% url 'home' %}" class="btn btn-primary btn-lg">
+        Browse More Products
+      </a>
+
+      <a href="{% url 'cart_view' %}" class="btn btn-outline-secondary btn-lg">
+        View Cart
+      </a>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

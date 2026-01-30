@@ -5,10 +5,10 @@
 <h2 class="mb-4">Dashboard</h2>
 
 <!-- ================= FILTERS ================= -->
-<form method="get" class="row g-3 mb-4">
+<form method="get" class="row g-3 mb-4" id="filterForm">
   <div class="col-md-3">
     <label class="form-label">Category</label>
-    <select name="category" class="form-select">
+    <select name="category" id="categorySelect" class="form-select">
       <option value="">All Categories</option>
       {% for category in categories %}
         <option value="{{ category.id }}"
@@ -21,7 +21,7 @@
 
   <div class="col-md-3">
     <label class="form-label">Subcategory</label>
-    <select name="subcategory" class="form-select">
+    <select name="subcategory" id="subcategorySelect" class="form-select">
       <option value="">All Subcategories</option>
       {% for sub in subcategories %}
         <option value="{{ sub.id }}"
@@ -34,7 +34,7 @@
 
   <div class="col-md-3">
     <label class="form-label">Product</label>
-    <select name="product" class="form-select">
+    <select name="product" id="productSelect" class="form-select">
       <option value="">All Products</option>
       {% for product in products %}
         <option value="{{ product.id }}"
@@ -43,16 +43,6 @@
         </option>
       {% endfor %}
     </select>
-  </div>
-
-  <div class="col-md-3">
-    <label class="form-label">From</label>
-    <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
-  </div>
-
-  <div class="col-md-3">
-    <label class="form-label">To</label>
-    <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
   </div>
 
   <div class="col-md-3 align-self-end">
@@ -194,43 +184,54 @@
   </tbody>
 </table>
 
-<!-- ================= STOCK EVOLUTION CHART ================= -->
-<div class="card mt-5">
-  <div class="card-body">
-    <h4 class="mb-3">Stock Level Over Time</h4>
-    <canvas id="movementChart"></canvas>
-  </div>
-</div>
-
-<!-- ================= CHART JS ================= -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- ================= AJAX FILTER SCRIPT ================= -->
 <script>
-  const movementData = {{ movements_by_date|safe }};
+const categorySelect = document.getElementById("categorySelect");
+const subcategorySelect = document.getElementById("subcategorySelect");
+const productSelect = document.getElementById("productSelect");
 
-  new Chart(document.getElementById('movementChart'), {
-    type: 'line',
-    data: {
-      labels: movementData.map(x => x.date),
-      datasets: [{
-        label: 'Total Stock',
-        data: movementData.map(x => x.total_stock),
-        tension: 0.3,
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      interaction: {
-        mode: 'index',
-        intersect: false
-      },
-      scales: {
-        y: {
-          beginAtZero: true
-        }
-      }
-    }
-  });
+categorySelect.addEventListener("change", () => {
+  const categoryId = categorySelect.value;
+
+  subcategorySelect.innerHTML = `<option value="">All Subcategories</option>`;
+  productSelect.innerHTML = `<option value="">All Products</option>`;
+
+  if (!categoryId) return;
+
+  fetch(`/ajax/subcategories/?category=${categoryId}`)
+    .then(res => res.json())
+    .then(data => {
+      data.forEach(sub => {
+        subcategorySelect.innerHTML +=
+          `<option value="${sub.id}">${sub.name}</option>`;
+      });
+    });
+
+  fetch(`/ajax/products/?category=${categoryId}`)
+    .then(res => res.json())
+    .then(data => {
+      data.forEach(prod => {
+        productSelect.innerHTML +=
+          `<option value="${prod.id}">${prod.name}</option>`;
+      });
+    });
+});
+
+subcategorySelect.addEventListener("change", () => {
+  const categoryId = categorySelect.value;
+  const subId = subcategorySelect.value;
+
+  productSelect.innerHTML = `<option value="">All Products</option>`;
+
+  fetch(`/ajax/products/?category=${categoryId}&subcategory=${subId}`)
+    .then(res => res.json())
+    .then(data => {
+      data.forEach(prod => {
+        productSelect.innerHTML +=
+          `<option value="${prod.id}">${prod.name}</option>`;
+      });
+    });
+});
 </script>
 
 {% endblock %}

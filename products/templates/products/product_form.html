@@ -1,16 +1,246 @@
 {% extends "base.html" %}
+{% block title %}Edit Product{% endblock %}
+
 {% block content %}
+<div class="product-form-shell">
 
-<div class="container py-4">
-  <h2>Edit Product</h2>
+  <div class="product-form-card">
 
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {{ form.as_p }}
+    <!-- Header -->
+    <header class="product-form-header">
+      <h1>Edit product</h1>
+      <p>Modify product details and visibility</p>
+    </header>
 
-    <button class="btn btn-success">Save Changes</button>
-    <a href="javascript:history.back()" class="btn btn-secondary">Cancel</a>
-  </form>
+    <form method="post" enctype="multipart/form-data" class="product-form">
+      {% csrf_token %}
+
+      {% for field in form %}
+
+        {% if field.field.widget.input_type == "checkbox" %}
+          <!-- ✅ CHECKBOX FIELD -->
+          <div class="checkbox-field">
+            <label class="checkbox-inline" for="{{ field.id_for_label }}">
+              {{ field }}
+              <span>{{ field.label }}</span>
+            </label>
+            {% if field.help_text %}
+              <div class="help-text">{{ field.help_text }}</div>
+            {% endif %}
+          </div>
+
+        {% elif field.field.widget.input_type == "file" %}
+          <!-- 📁 FILE / IMAGE FIELD -->
+          <div class="input-field">
+            {{ field }}
+
+            {% if field.help_text %}
+              <div class="help-text">{{ field.help_text }}</div>
+            {% endif %}
+
+            {% for error in field.errors %}
+              <div class="error-text">{{ error }}</div>
+            {% endfor %}
+          </div>
+
+        {% else %}
+          <!-- NORMAL FIELD -->
+          <div class="input-field">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+
+            {% if field.help_text %}
+              <div class="help-text">{{ field.help_text }}</div>
+            {% endif %}
+
+            {% for error in field.errors %}
+              <div class="error-text">{{ error }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+      {% endfor %}
+
+      <!-- Form footer -->
+      <footer class="form-footer">
+        <a href="javascript:history.back()" class="btn-muted">Cancel</a>
+        <button type="submit" class="btn-solid">Save changes</button>
+      </footer>
+
+    </form>
+  </div>
 </div>
 
+<style>
+/* ================= LAYOUT ================= */
+.product-form-shell {
+  max-width: 720px;
+  margin: 3.5rem auto;
+  padding: 0 1.5rem;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.product-form-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(0,0,0,.06);
+}
+
+.product-form-header {
+  padding: 1.8rem 2rem 1.2rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.product-form-header h1 {
+  font-size: 1.6rem;
+  font-weight: 650;
+  margin: 0;
+}
+
+.product-form-header p {
+  margin-top: .35rem;
+  font-size: .9rem;
+  color: #64748b;
+}
+
+.product-form {
+  padding: 2rem;
+}
+
+/* ================= NORMAL INPUTS ================= */
+.input-field {
+  margin-bottom: 1.5rem;
+}
+
+.input-field label {
+  display: block;
+  margin-bottom: .4rem;
+  font-size: .85rem;
+  font-weight: 600;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: .65rem .8rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: .95rem;
+}
+
+/* ================= CHECKBOX ================= */
+input[type="checkbox"] {
+  width: auto !important;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  flex: none;
+}
+
+.checkbox-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  cursor: pointer;
+  font-size: .9rem;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.checkbox-field {
+  margin: 1.8rem 0;
+}
+
+/* ================= IMAGE PREVIEW ================= */
+.image-preview-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.6rem;
+}
+
+.image-preview {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+
+/* inline remove checkbox */
+.file-clear-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #475569;
+}
+
+.file-clear-wrapper input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+/* ================= HELP / ERROR ================= */
+.help-text {
+  margin-top: .35rem;
+  font-size: .75rem;
+  color: #6b7280;
+}
+
+.error-text {
+  margin-top: .35rem;
+  font-size: .75rem;
+  color: #dc2626;
+}
+
+/* ================= FOOTER ================= */
+.form-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: .8rem;
+  padding-top: 1.5rem;
+  margin-top: 2rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ================= BUTTONS ================= */
+.btn-muted {
+  padding: .55rem 1.4rem;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  font-size: .85rem;
+  font-weight: 600;
+  color: #475569;
+  text-decoration: none;
+}
+
+.btn-muted:hover {
+  background: #f1f5f9;
+}
+
+.btn-solid {
+  padding: .55rem 1.8rem;
+  border-radius: 999px;
+  border: none;
+  background: #0f172a;
+  color: #fff;
+  font-size: .85rem;
+  font-weight: 600;
+}
+
+.btn-solid:hover {
+  background: #1e293b;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 600px) {
+  .image-preview-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+</style>
 {% endblock %}

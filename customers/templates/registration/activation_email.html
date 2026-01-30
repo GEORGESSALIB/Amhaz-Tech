@@ -1,7 +1,66 @@
-Hi {{ user.username }},
-
-Please click the link below to verify your account:
-
-http://{{ domain }}{% url 'activate' uidb64=uid token=token %}
-
-Thank you!
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Activate Your Account</title>
+  <style>
+    /* Reset some defaults for email clients */
+    body, p, a {
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+      color: #333333;
+    }
+    body {
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      background-color: #ffffff;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #333333;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    p {
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      font-size: 16px;
+      color: #ffffff;
+      background-color: #007BFF; /* blue button */
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 14px;
+      color: #777777;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Hello {{ user.username }},</h2>
+    <p>Thank you for signing up! Please click the button below to verify your account and complete the registration process.</p>
+    <p style="text-align: center;">
+      <a class="button" href="http://{{ domain }}{% url 'activate' uidb64=uid token=token %}">Activate Account</a>
+    </p>
+    <p>If the button above does not work, copy and paste the following link into your browser:</p>
+    <p><a href="http://{{ domain }}{% url 'activate' uidb64=uid token=token %}">http://{{ domain }}{% url 'activate' uidb64=uid token=token %}</a></p>
+    <div class="footer">
+      <p>Thank you,<br>Amhaz Tech Team</p>
+    </div>
+  </div>
+</body>
+</html>

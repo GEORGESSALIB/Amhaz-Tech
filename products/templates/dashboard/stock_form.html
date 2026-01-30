@@ -1,10 +1,102 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>{{ action }} Stock for {{ product.name }}</h2>
-<form method="post" class="mt-3">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <button type="submit" class="btn btn-primary">{{ action }} Stock</button>
-    <a href="{% url 'dashboard' %}" class="btn btn-secondary">Cancel</a>
-</form>
+
+<style>
+.stock-card {
+  max-width: 620px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 18px;
+  padding: 32px;
+  box-shadow: var(--shadow-soft);
+}
+
+.stock-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.8rem;
+}
+
+.stock-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(37,99,235,.12);
+  color: var(--primary);
+  font-size: 1.5rem;
+}
+
+.stock-header h2 {
+  margin: 0;
+  font-weight: 700;
+}
+
+.stock-subtitle {
+  font-size: .9rem;
+  color: var(--text-muted);
+}
+
+.stock-card form p {
+  margin-bottom: 1.2rem;
+}
+
+.stock-card input,
+.stock-card select {
+  width: 100%;
+  border-radius: 12px;
+  padding: .55rem .75rem;
+}
+
+.stock-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+.stock-actions .btn {
+  padding: .55rem 1.3rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+</style>
+
+<div class="stock-card">
+
+  <!-- HEADER -->
+  <div class="stock-header">
+    <div class="stock-icon">
+      <i class="bi bi-box-seam"></i>
+    </div>
+    <div>
+      <h2>{{ action }} Stock</h2>
+      <div class="stock-subtitle">
+        Product: <strong>{{ product.name }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORM -->
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <!-- ACTIONS -->
+    <div class="stock-actions">
+      <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+        Cancel
+      </a>
+
+      <button type="submit" class="btn btn-primary">
+        {{ action }} Stock
+      </button>
+    </div>
+  </form>
+
+</div>
+
 {% endblock %}

@@ -18,7 +18,7 @@ def signup(request):
             user.is_active = False
             user.save()
 
-            # send verification email
+            # Send verification email as HTML
             current_site = get_current_site(request)
             mail_subject = 'Activate your account'
             message = render_to_string('registration/activation_email.html', {
@@ -27,12 +27,18 @@ def signup(request):
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                 'token': default_token_generator.make_token(user),
             })
-            email = EmailMessage(mail_subject, message, to=[user.email])
+            email = EmailMessage(
+                subject=mail_subject,
+                body=message,
+                to=[user.email],
+            )
+            email.content_subtype = "html"  # <--- This makes the email HTML
             email.send()
 
             return render(request, 'registration/verification_sent.html')
     else:
         form = SignUpForm()
+
     return render(request, 'registration/signup.html', {'form': form})
 
 

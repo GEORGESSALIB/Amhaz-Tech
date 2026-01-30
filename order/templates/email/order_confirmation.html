@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Order #{{ order.id }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f6f6f6;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            background: #ffffff;
+            margin: auto;
+            padding: 20px;
+            border-radius: 6px;
+        }
+        h2 {
+            color: #333;
+            margin-top: 0;
+        }
+        .section {
+            margin-top: 20px;
+        }
+        .label {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 6px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #e5e5e5;
+            padding: 8px;
+            text-align: left;
+            font-size: 14px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 13px;
+            color: #888;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🧾 Order #{{ order.id }}</h2>
+
+    <p>
+        Your order has been received,
+        <strong>{{ order.customer_name }}</strong>.
+        Below are the order details.
+    </p>
+
+    <!-- ================= CUSTOMER INFO ================= -->
+    <div class="section">
+        <div class="label">Customer Information</div>
+        <p>
+            📞 {{ order.customer_phone }}<br>
+            📍 {{ order.get_district_display }}<br>
+            🏠 {{ order.customer_address }}<br>
+            🏢 {{ order.building_name }}
+        </p>
+    </div>
+
+<!-- ================= ORDER ITEMS ================= -->
+<div class="section">
+    <div class="label">Ordered Items</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th style="width: 80px;">Qty</th>
+                <th>Item Price</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>${{ item.product.price|floatformat:2 }}</td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <td colspan="2" style="text-align:right;font-weight:bold;">Total</td>
+                <td style="font-weight:bold;">${{ total_price|floatformat:2 }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+
+    <!-- ================= ORDER TYPE ================= -->
+    <div class="section">
+        <div class="label">Order Type</div>
+        <p>{{ order.get_order_type_display }}</p>
+    </div>
+
+    <!-- ================= FOOTER ================= -->
+    <div class="footer">
+        Thank you for ordering from Amhaz Tech.
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,10 +1,4 @@
-import urllib.parse
 from .models import Cart
-
-def build_whatsapp_link(phone, message):
-    encoded = urllib.parse.quote(message)
-    return f"https://wa.me/{phone}?text={encoded}"
-
 
 def get_or_create_cart(request):
     # Logged-in user

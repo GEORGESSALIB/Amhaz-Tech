@@ -1,20 +1,23 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test, login_required
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
-from django.db.models import Q
-from django.http import JsonResponse, HttpResponseRedirect
+from django.db.models import Q, Sum
+from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
-from django.urls import reverse
+from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.html import strip_tags
 from django.views.decorators.http import require_POST
 from products.models import Product, Category, SubCategory
 from .forms import CheckoutForm
 from .models import Cart, CartItem, Order, OrderItem
 from products.models import StockMovement
-from .utils import build_whatsapp_link, get_or_create_cart
+from .utils import get_or_create_cart
 from amhaz import settings
 
+def staff_required(user):
+    return user.is_staff
 
 def cart_view(request):
     cart = get_or_create_cart(request)
@@ -58,13 +61,12 @@ def cart_view(request):
 
 def cart_add(request, product_id):
     if request.method != "POST":
-        return HttpResponseRedirect(reverse("cart_view"))
+        return JsonResponse({"error": "Invalid request"}, status=400)
 
     product = get_object_or_404(Product, id=product_id)
 
-    # ❌ Do not add if out of stock
     if product.cached_quantity <= 0:
-        return HttpResponseRedirect(reverse("cart_view"))
+        return JsonResponse({"error": "Out of stock"}, status=400)
 
     cart = get_or_create_cart(request)
 
@@ -74,20 +76,23 @@ def cart_add(request, product_id):
         defaults={"quantity": 1}
     )
 
-    if not created:
-        # ❌ Respect stock limit
-        if item.quantity < product.cached_quantity:
-            item.quantity += 1
-            item.save()
+    if not created and item.quantity < product.cached_quantity:
+        item.quantity += 1
+        item.save()
 
-    return HttpResponseRedirect(reverse("cart_view"))
+    total_items = cart.items.aggregate(
+        total=Sum("quantity")
+    )["total"] or 0
+
+    return JsonResponse({
+        "success": True,
+        "cart_count": total_items
+    })
 
 def cart_remove(request, item_id):
     item = get_object_or_404(CartItem, id=item_id)
     item.delete()
     return redirect("cart_view")
-
-from django.db import transaction
 
 def checkout(request):
     cart = get_or_create_cart(request)
@@ -104,6 +109,7 @@ def checkout(request):
             order.user = request.user if request.user.is_authenticated else None
             order.status = "confirmed"
             order.save()
+
             return finalize_order(request, order, cart)
 
     else:
@@ -117,11 +123,12 @@ def checkout(request):
             )
             form.fields["customer_email"].widget.attrs["value"] = request.user.email
             form.fields["customer_phone"].widget.attrs["value"] = (
-                profile.phone if profile else ""
+                profile.customer_phone if profile else ""
             )
 
             form.initial["district"] = profile.district if profile else ""
             form.initial["customer_address"] = profile.customer_address if profile else ""
+            form.initial["building_name"] = profile.building_name if profile else ""
             form.fields["order_type"].widget.attrs["value"] = "delivery"
 
     return render(request, "order/checkout.html", {
@@ -130,12 +137,14 @@ def checkout(request):
         "items": items,
     })
 
-
 @transaction.atomic
 def finalize_order(request, order, cart):
     items = cart.items.select_related("product")
     customer_name = order.customer_name
 
+    # ----------------------------
+    # PLAIN TEXT (ADMIN FALLBACK)
+    # ----------------------------
     message_lines = [
         f"New Order #{order.id}",
         f"Type: {order.get_order_type_display()}",
@@ -143,14 +152,19 @@ def finalize_order(request, order, cart):
         "Items:",
     ]
 
+    # ----------------------------
+    # PROCESS ITEMS & STOCK
+    # ----------------------------
     for item in items:
         product = item.product
 
         if product.cached_quantity < item.quantity:
-            messages.error(request, f"Not enough stock for {product.name}")
+            messages.error(
+                request,
+                f"Not enough stock for {product.name}"
+            )
             return redirect("cart_view")
 
-        # ✅ CREATE ORDER ITEM
         OrderItem.objects.create(
             order=order,
             product=product,
@@ -158,57 +172,96 @@ def finalize_order(request, order, cart):
             price=product.price,
         )
 
-        # ✅ UPDATE STOCK
         product.cached_quantity -= item.quantity
         product.save(update_fields=["cached_quantity"])
 
-        # ✅ STOCK MOVEMENT
         StockMovement.objects.create(
             product=product,
             change=-item.quantity,
             reason=f"Order #{order.id} from {customer_name}",
         )
 
-        message_lines.append(f"- {product.name} x{item.quantity}")
+        message_lines.append(
+            f"- {product.name} x{item.quantity}"
+        )
 
     message_lines.extend([
         "",
         f"Customer: {customer_name}",
         f"Phone: {order.customer_phone}",
+        f"Email: {order.customer_email}",
         f"District: {order.get_district_display()}",
         f"Address: {order.customer_address}",
+        f"Building: {order.building_name}",
     ])
 
-    email_body = "\n".join(message_lines)
+    admin_text_body = "\n".join(message_lines)
 
-    # ✅ SEND EMAIL
-    send_mail(
-        subject=f"New Order #{order.id}",
-        message=email_body,
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[
-            settings.DEFAULT_FROM_EMAIL,  # store/admin
-            order.customer_email,         # optional: customer copy
-        ],
-        fail_silently=False,
+    # ----------------------------
+    # CUSTOMER EMAIL (HTML)
+    # ----------------------------
+    total_price = sum(item.product.price * item.quantity for item in items)
+    customer_html = render_to_string(
+        "email/order_confirmation.html",
+        {
+            "order": order,
+            "items": items,
+            "total_price": total_price,
+        }
     )
 
-    # ✅ RESET CART
+    customer_email = EmailMultiAlternatives(
+        subject=f"Your Order #{order.id} Has Been Received",
+        body=strip_tags(customer_html),
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[order.customer_email],
+    )
+    customer_email.attach_alternative(customer_html, "text/html")
+    customer_email.send(fail_silently=False)
+
+    # ----------------------------
+    # ADMIN EMAIL (HTML)
+    # ----------------------------
+    admin_html = render_to_string(
+        "email/order_admin.html",
+        {
+            "order": order,
+            "items": items,
+            "total_price": total_price,
+        }
+    )
+
+    admin_email = EmailMultiAlternatives(
+        subject=f"🚨 New Order #{order.id}",
+        body=admin_text_body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[settings.DEFAULT_FROM_EMAIL],
+    )
+    admin_email.attach_alternative(admin_html, "text/html")
+    admin_email.send(fail_silently=False)
+
+    # ----------------------------
+    # RESET CART
+    # ----------------------------
     cart.items.all().delete()
     cart.is_active = False
     cart.save(update_fields=["is_active"])
 
-    # ✅ CREATE NEW CART
+    # ----------------------------
+    # CREATE NEW CART
+    # ----------------------------
     if request.user.is_authenticated:
         Cart.objects.create(user=request.user)
     else:
         new_cart = Cart.objects.create()
         request.session["cart_id"] = new_cart.id
 
-    messages.success(request, "Order placed successfully! Confirmation email sent.")
+    messages.success(
+        request,
+        "Order placed successfully! A confirmation email has been sent."
+    )
 
     return redirect("order_success")
-
 
 @require_POST
 def cart_update_quantity(request):
@@ -218,7 +271,6 @@ def cart_update_quantity(request):
     item = get_object_or_404(
         CartItem,
         id=item_id,
-        cart__user=request.user
     )
 
     product = item.product
@@ -256,12 +308,6 @@ def cart_update_quantity(request):
         "cart_total": item.cart.total_price(),
     })
 
-
-# Only staff can access
-def staff_required(user):
-    return user.is_staff
-
-
 @login_required
 @user_passes_test(staff_required)
 def confirmed_orders(request):
@@ -286,7 +332,6 @@ def confirmed_orders(request):
         "order_number": order_number,
     }
     return render(request, "order/confirmed_orders.html", context)
-
 
 @login_required
 @user_passes_test(staff_required)

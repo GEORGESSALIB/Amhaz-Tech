@@ -37,10 +37,11 @@ class SignUpForm(UserCreationForm):
     phone = forms.CharField(max_length=30, required=True)
     district = forms.ChoiceField(choices=DISTRICT_CHOICES, required=True)
     village = forms.CharField(max_length=100, required=True)
+    building_name = forms.CharField(max_length=100, required=True)
 
     class Meta:
         model = User
-        fields = ("username", "email", "password1", "password2", "phone", "district", "village")
+        fields = ("username", "email", "password1", "password2", "phone", "district", "village", "building_name")
 
     def clean_email(self):
         email = self.cleaned_data.get("email").lower()
@@ -60,6 +61,7 @@ class SignUpForm(UserCreationForm):
                 user=user,
                 phone=self.cleaned_data["phone"],
                 district=self.cleaned_data["district"],
-                village=self.cleaned_data["village"]
+                village=self.cleaned_data["village"],
+                building_name=self.cleaned_data["building_name"],
             )
         return user
