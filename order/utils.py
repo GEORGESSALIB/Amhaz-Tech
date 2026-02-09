@@ -1,3 +1,5 @@
+from django.db.models import Sum
+
 from .models import Cart
 
 def get_or_create_cart(request):

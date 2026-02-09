@@ -1,6 +1,6 @@
 from .models import Category
 from order.utils import get_or_create_cart
-
+from django.db.models import Sum
 
 def navbar_data(request):
     # Only active categories
@@ -19,8 +19,11 @@ def navbar_data(request):
 def cart_context(request):
     cart = get_or_create_cart(request)
 
+    total_items = 0
+    if cart:
+        total_items = cart.items.aggregate(total=Sum("quantity"))["total"] or 0
+
     return {
         "cart": cart,
-        "cart_count": cart.items.count() if cart else 0
+        "cart_count": total_items
     }
-
